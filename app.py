@@ -61,71 +61,59 @@ def analyze_video():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
-        def generate():
-            try:
-                # Process video and get frames
-                frames = video_processor.extract_frames(filepath)
-                total_frames = len(frames)
+        try:
+            # Process video and get frames
+            frames = video_processor.extract_frames(filepath)
+            
+            # Create a folder to save frame images
+            frames_folder = os.path.join(app.config['FRAMES_FOLDER'], os.path.splitext(filename)[0])
+            os.makedirs(frames_folder, exist_ok=True)
+            
+            # Save frames as images
+            frame_paths = []
+            for i, frame in enumerate(frames):
+                frame_path = os.path.join(frames_folder, f"frame_{i}.jpg")
+                cv2.imwrite(frame_path, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+                frame_paths.append(os.path.join('static/frames', os.path.splitext(filename)[0], f"frame_{i}.jpg"))
+            
+            # Analyze frames for content moderation
+            results = content_moderator.analyze_frames(frames)
+            
+            # Calculate overall video safety
+            unsafe_frames = [r for r in results if r['flagged']]
+            total_frames = len(results)
+            unsafe_percentage = (len(unsafe_frames) / total_frames) * 100
+            
+            # Prepare response
+            response = {
+                'status': 'UNSAFE' if unsafe_frames else 'SAFE',
+                'total_frames': total_frames,
+                'unsafe_frames': len(unsafe_frames),
+                'unsafe_percentage': unsafe_percentage,
+                'confidence': 1.0 if not unsafe_frames else max(r['confidence'] for r in unsafe_frames),
+                'details': []
+            }
+            
+            # Add details for unsafe frames with frame images
+            if unsafe_frames:
+                for i, result in enumerate(results):
+                    if result['flagged']:
+                        response['details'].append({
+                            'frame_index': i,
+                            'confidence': result['confidence'],
+                            'reason': result['reason'],
+                            'frame_image_url': frame_paths[i]  # Add the image URL
+                        })
+            
+            # Clean up original video file
+            if os.path.exists(filepath):
+                os.remove(filepath)
                 
-                yield json.dumps({"status": "processing", "progress": 0, "message": "Extracting frames..."}) + "\n"
-                
-                # Analyze frames in batches for content moderation
-                results = []
-                batch_size = 10  # Process 10 frames at a time
-                
-                for i in range(0, total_frames, batch_size):
-                    batch_end = min(i + batch_size, total_frames)
-                    batch_frames = frames[i:batch_end]
-                    
-                    batch_results = content_moderator.analyze_frames(batch_frames)
-                    results.extend(batch_results)
-                    
-                    # Calculate and send progress
-                    progress = min(100, int((batch_end / total_frames) * 100))
-                    yield json.dumps({
-                        "status": "processing", 
-                        "progress": progress, 
-                        "message": f"Analyzing frame {batch_end}/{total_frames}"
-                    }) + "\n"
-                
-                # Calculate overall video safety
-                unsafe_frames = [r for r in results if r['flagged']]
-                total_frames = len(results)
-                unsafe_percentage = (len(unsafe_frames) / total_frames) * 100
-                
-                # Prepare final response
-                final_response = {
-                    "status": "complete",
-                    "result": {
-                        'status': 'UNSAFE' if unsafe_frames else 'SAFE',
-                        'total_frames': total_frames,
-                        'unsafe_frames': len(unsafe_frames),
-                        'unsafe_percentage': unsafe_percentage,
-                        'confidence': 1.0 if not unsafe_frames else max(r['confidence'] for r in unsafe_frames),
-                        'details': []
-                    }
-                }
-                
-                # Add details for unsafe frames
-                if unsafe_frames:
-                    for i, result in enumerate(results):
-                        if result['flagged']:
-                            final_response["result"]["details"].append({
-                                'frame_index': i,
-                                'confidence': result['confidence'],
-                                'reason': result['reason']
-                            })
-                
-                yield json.dumps(final_response) + "\n"
-                
-                # Clean up
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                    
-            except Exception as e:
-                yield json.dumps({"status": "error", "message": str(e)}) + "\n"
-                
-        return Response(stream_with_context(generate()), mimetype='text/event-stream')
+            return jsonify(response)
+            
+        except Exception as e:
+            app.logger.error(f"Error processing video: {str(e)}")
+            return jsonify({'error': str(e)}), 500
 
 # Add error handling
 @app.errorhandler(Exception)

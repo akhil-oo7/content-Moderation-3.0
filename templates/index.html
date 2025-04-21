@@ -250,11 +250,10 @@
         </div>
         
         <div id="resultsContainer" style="display: none;">
-            <h2>Analysis Results</h2>
-            <div class="status" id="status"></div>
-            <div class="confidence" id="confidence"></div>
-            <div class="stats" id="stats"></div>
-            <div class="details" id="details"></div>
+            <h3>Analysis Results</h3>
+            <div id="videoStatus"></div>
+            <div id="analysisStats"></div>
+            <div id="unsafeFrames"></div>
         </div>
     </div>
 
@@ -315,39 +314,52 @@
                                     resultsContainer.style.display = 'block';
                                     
                                     // Update status
-                                    const status = document.getElementById('status');
-                                    status.textContent = `Video Status: ${data.result.status}`;
-                                    status.className = `status ${data.result.status.toLowerCase()}`;
+                                    const status = document.getElementById('videoStatus');
+                                    status.innerHTML = `
+                                        <div class="alert alert-${data.result.status === 'SAFE' ? 'success' : 'danger'}">
+                                            <strong>Video Status: ${data.result.status}</strong>
+                                        </div>
+                                    `;
 
                                     // Update confidence
                                     document.getElementById('confidence').textContent = 
                                         `Confidence: ${(data.result.confidence * 100).toFixed(1)}%`;
 
                                     // Update stats
-                                    document.getElementById('stats').textContent = 
-                                        `Analyzed ${data.result.total_frames} frames. ` +
-                                        (data.result.unsafe_frames > 0 ? 
-                                            `${data.result.unsafe_frames} unsafe frames (${data.result.unsafe_percentage.toFixed(1)}%)` : 
-                                            'No unsafe content detected.');
+                                    const analysisStats = document.getElementById('analysisStats');
+                                    analysisStats.innerHTML = `
+                                        <p>Total Frames Analyzed: ${data.result.total_frames}</p>
+                                        <p>Unsafe Frames Detected: ${data.result.unsafe_frames}</p>
+                                        <p>Unsafe Content Percentage: ${data.result.unsafe_percentage.toFixed(1)}%</p>
+                                    `;
 
-                                    // Update details
-                                    const details = document.getElementById('details');
-                                    details.innerHTML = '';
+                                    // Update unsafe frames
+                                    const unsafeFrames = document.getElementById('unsafeFrames');
+                                    unsafeFrames.innerHTML = '';
                                     
-                                    if (data.result.details.length > 0) {
+                                    if (data.result.details && data.result.details.length > 0) {
                                         data.result.details.forEach(detail => {
-                                            const frameDetail = document.createElement('div');
-                                            frameDetail.className = 'frame-detail';
-                                            frameDetail.innerHTML = `
-                                                <img src="${detail.image_data}" alt="Frame ${detail.frame}" class="frame-image">
-                                                <div class="frame-info">
-                                                    <strong>Frame ${detail.frame}:</strong><br>
-                                                    Reason: ${detail.reason}<br>
-                                                    Confidence: ${(detail.confidence * 100).toFixed(1)}%
+                                            unsafeFrames.innerHTML += `
+                                                <div class="card mb-3">
+                                                    <div class="card-header">
+                                                        Frame ${detail.frame_index}
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <img src="${detail.frame_image_url}" class="img-fluid" alt="Frame ${detail.frame_index}">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <p><strong>Reason:</strong> ${detail.reason}</p>
+                                                                <p><strong>Confidence:</strong> ${(detail.confidence * 100).toFixed(1)}%</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             `;
-                                            details.appendChild(frameDetail);
                                         });
+                                    } else if (data.result.status === 'SAFE') {
+                                        unsafeFrames.innerHTML = '<p>No unsafe content detected in this video.</p>';
                                     }
                                 }
                                 else if (data.status === 'error') {
