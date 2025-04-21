@@ -1,9 +1,11 @@
 flask==2.0.1
 gunicorn==20.1.0
 opencv-python-headless==4.5.3.56
-numpy==1.21.2
+numpy==1.21.4
 torch==1.9.1
 pillow==8.3.2
 transformers==4.11.3
 werkzeug==2.0.1
 safetensors
+setuptools>=42
+wheel
