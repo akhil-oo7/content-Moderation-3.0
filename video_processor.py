@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 
 class VideoProcessor:
-    def __init__(self, frame_interval=30, target_size=(224, 224)):
+    def __init__(self, frame_interval=30, target_size=(112, 112)):
         """
         Initialize the VideoProcessor.
         
