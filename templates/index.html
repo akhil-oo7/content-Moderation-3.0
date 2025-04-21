@@ -5,261 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Content Moderation</title>
     <style>
-        :root {
-            --primary-color: #4a6bff;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --text-color: #333;
-            --light-gray: #f8f9fa;
-            --border-color: #dee2e6;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: #f0f2f5;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
         }
-
-        .container {
-            background-color: white;
-            width: 100%;
-            max-width: 800px;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
         h1 {
-            color: var(--primary-color);
             text-align: center;
-            margin-bottom: 2rem;
-            font-size: 2.2rem;
-            font-weight: 600;
+            color: #333;
         }
-
-        .upload-section {
+        .upload-container {
+            border: 2px dashed #ccc;
+            padding: 20px;
             text-align: center;
-            margin: 2rem 0;
-            padding: 2rem;
-            border: 2px dashed var(--border-color);
-            border-radius: 8px;
-            background-color: var(--light-gray);
-            transition: all 0.3s ease;
+            margin-bottom: 20px;
         }
-
-        .upload-section:hover {
-            border-color: var(--primary-color);
-            background-color: rgba(74, 107, 255, 0.05);
-        }
-
-        .upload-section h2 {
-            color: var(--text-color);
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-
-        input[type="file"] {
+        .result-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
             display: none;
         }
-
-        .file-input-label {
-            display: inline-block;
-            padding: 0.8rem 1.5rem;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 1rem;
+        .safe {
+            background-color: #d4edda;
+            color: #155724;
         }
-
-        .file-input-label:hover {
-            background-color: #3a5bef;
-            transform: translateY(-2px);
+        .unsafe {
+            background-color: #f8d7da;
+            color: #721c24;
         }
-
-        button {
-            padding: 0.8rem 1.5rem;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+        .flag-details {
+            margin-top: 20px;
         }
-
-        button:hover {
-            background-color: #3a5bef;
-            transform: translateY(-2px);
-        }
-
-        .status {
-            padding: 1.2rem;
-            margin: 1.5rem 0;
-            border-radius: 8px;
+        .processing {
             text-align: center;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            display: none;
         }
-
-        .status.safe {
-            background-color: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
-            border: 1px solid rgba(40, 167, 69, 0.2);
-        }
-
-        .status.unsafe {
-            background-color: rgba(220, 53, 69, 0.1);
-            color: var(--danger-color);
-            border: 1px solid rgba(220, 53, 69, 0.2);
-        }
-
-        .status.processing {
-            background-color: rgba(74, 107, 255, 0.1);
-            color: var(--primary-color);
-            border: 1px solid rgba(74, 107, 255, 0.2);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: var(--light-gray);
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
             border-radius: 4px;
-            margin: 1rem 0;
-            overflow: hidden;
+            cursor: pointer;
         }
-
-        .progress {
-            width: 0%;
-            height: 100%;
-            background-color: var(--primary-color);
-            transition: width 0.3s ease;
-            border-radius: 4px;
+        .btn:hover {
+            background-color: #45a049;
         }
-
-        .results {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background-color: var(--light-gray);
-            border-radius: 8px;
+        .details-container {
+            margin-top: 20px;
         }
-
-        .results h2 {
-            color: var(--text-color);
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
+        .frame-container {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
         }
-
-        .confidence {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin: 1rem 0;
-            color: var(--primary-color);
-        }
-
-        .stats {
-            margin: 1rem 0;
-            padding: 1rem;
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .details {
-            margin-top: 1.5rem;
-        }
-
-        .frame-detail {
-            background-color: white;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .frame-detail:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .frame-image {
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-            border-radius: 4px;
-            margin: 1rem 0;
-            object-fit: contain;
-        }
-
-        .frame-info {
-            margin-top: 1rem;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 1rem;
-            }
-
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            .upload-section {
-                padding: 1.5rem;
-            }
-
-            .file-input-label, button {
-                width: 100%;
-                margin: 0.5rem 0;
-            }
+        img {
+            max-width: 100%;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Video Content Moderation</h1>
-        
-        <div class="upload-section">
-            <h2>Upload Video</h2>
-            <label for="videoInput" class="file-input-label">Choose File</label>
-            <input type="file" id="videoInput" accept="video/*">
-            <button onclick="analyzeVideo()">Analyze Video</button>
-        </div>
-        
-        <div id="progressContainer" style="display: none;">
-            <div class="progress">
-                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-            </div>
-            <p id="progressMessage">Initializing...</p>
-        </div>
-        
-        <div id="resultsContainer" style="display: none;">
-            <h3>Analysis Results</h3>
-            <div id="videoStatus"></div>
-            <div id="analysisStats"></div>
-            <div id="unsafeFrames"></div>
-        </div>
+    <h1>Video Content Moderation</h1>
+    
+    <div class="upload-container">
+        <h2>Upload a Video</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="videoFile" name="video" accept="video/*"><br><br>
+            <button type="button" class="btn" onclick="uploadVideo()">Analyze Video</button>
+        </form>
     </div>
-
+    
+    <div id="processing" class="processing">
+        <h3>Processing video... Please wait.</h3>
+    </div>
+    
+    <div id="resultContainer" class="result-container">
+        <h2>Analysis Results</h2>
+        <div id="status"></div>
+        <div id="stats"></div>
+    </div>
+    
+    <div id="detailsContainer" class="details-container"></div>
+    
     <script>
-        function analyzeVideo() {
-            const fileInput = document.getElementById('videoInput');
+        function uploadVideo() {
+            const fileInput = document.getElementById('videoFile');
             const file = fileInput.files[0];
             
             if (!file) {
@@ -267,120 +100,64 @@
                 return;
             }
             
+            // Show processing message
+            document.getElementById('processing').style.display = 'block';
+            
+            // Hide previous results
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('detailsContainer').innerHTML = '';
+            
             const formData = new FormData();
             formData.append('video', file);
             
-            // Show progress container
-            const progressContainer = document.getElementById('progressContainer');
-            const resultsContainer = document.getElementById('resultsContainer');
-            const progressBar = document.getElementById('progressBar');
-            const progressMessage = document.getElementById('progressMessage');
-            
-            progressContainer.style.display = 'block';
-            resultsContainer.style.display = 'none';
-            
-            // Make the fetch request
             fetch('/analyze', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
+            .then(response => response.json())
+            .then(data => {
+                // Hide processing message
+                document.getElementById('processing').style.display = 'none';
                 
-                function readStream() {
-                    return reader.read().then(({done, value}) => {
-                        if (done) {
-                            return;
-                        }
-                        
-                        const text = decoder.decode(value);
-                        const lines = text.split('\n').filter(line => line.trim());
-                        
-                        lines.forEach(line => {
-                            try {
-                                const data = JSON.parse(line);
-                                
-                                if (data.status === 'processing') {
-                                    // Update progress
-                                    progressBar.style.width = data.progress + '%';
-                                    progressBar.setAttribute('aria-valuenow', data.progress);
-                                    progressBar.textContent = data.progress + '%';
-                                    progressMessage.textContent = data.message;
-                                } 
-                                else if (data.status === 'complete') {
-                                    // Display results
-                                    progressContainer.style.display = 'none';
-                                    resultsContainer.style.display = 'block';
-                                    
-                                    // Update status
-                                    const status = document.getElementById('videoStatus');
-                                    status.innerHTML = `
-                                        <div class="alert alert-${data.result.status === 'SAFE' ? 'success' : 'danger'}">
-                                            <strong>Video Status: ${data.result.status}</strong>
-                                        </div>
-                                    `;
-
-                                    // Update confidence
-                                    document.getElementById('confidence').textContent = 
-                                        `Confidence: ${(data.result.confidence * 100).toFixed(1)}%`;
-
-                                    // Update stats
-                                    const analysisStats = document.getElementById('analysisStats');
-                                    analysisStats.innerHTML = `
-                                        <p>Total Frames Analyzed: ${data.result.total_frames}</p>
-                                        <p>Unsafe Frames Detected: ${data.result.unsafe_frames}</p>
-                                        <p>Unsafe Content Percentage: ${data.result.unsafe_percentage.toFixed(1)}%</p>
-                                    `;
-
-                                    // Update unsafe frames
-                                    const unsafeFrames = document.getElementById('unsafeFrames');
-                                    unsafeFrames.innerHTML = '';
-                                    
-                                    if (data.result.details && data.result.details.length > 0) {
-                                        data.result.details.forEach(detail => {
-                                            unsafeFrames.innerHTML += `
-                                                <div class="card mb-3">
-                                                    <div class="card-header">
-                                                        Frame ${detail.frame_index}
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <img src="${detail.frame_image_url}" class="img-fluid" alt="Frame ${detail.frame_index}">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <p><strong>Reason:</strong> ${detail.reason}</p>
-                                                                <p><strong>Confidence:</strong> ${(detail.confidence * 100).toFixed(1)}%</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            `;
-                                        });
-                                    } else if (data.result.status === 'SAFE') {
-                                        unsafeFrames.innerHTML = '<p>No unsafe content detected in this video.</p>';
-                                    }
-                                }
-                                else if (data.status === 'error') {
-                                    // Display error
-                                    progressContainer.style.display = 'none';
-                                    alert('Error: ' + data.message);
-                                }
-                            } catch (e) {
-                                console.error('Error parsing JSON:', e, line);
-                            }
-                        });
-                        
-                        return readStream();
+                // Show result container
+                const resultContainer = document.getElementById('resultContainer');
+                resultContainer.style.display = 'block';
+                resultContainer.className = data.status === 'SAFE' ? 'result-container safe' : 'result-container unsafe';
+                
+                // Update status
+                document.getElementById('status').innerHTML = `<h3>Status: ${data.status}</h3>`;
+                
+                // Update stats
+                document.getElementById('stats').innerHTML = `
+                    <p>Total frames analyzed: ${data.total_frames}</p>
+                    <p>Unsafe frames detected: ${data.unsafe_frames}</p>
+                    <p>Unsafe content percentage: ${data.unsafe_percentage.toFixed(2)}%</p>
+                    <p>Confidence: ${(data.confidence * 100).toFixed(2)}%</p>
+                `;
+                
+                // Display details of flagged frames
+                const detailsContainer = document.getElementById('detailsContainer');
+                if (data.details && data.details.length > 0) {
+                    let detailsHtml = '<h3>Flagged Frames Details:</h3>';
+                    
+                    data.details.forEach(detail => {
+                        detailsHtml += `
+                            <div class="frame-container">
+                                <p>Frame #${detail.frame}</p>
+                                <p>Reason: ${detail.reason}</p>
+                                <p>Confidence: ${(detail.confidence * 100).toFixed(2)}%</p>
+                                <img src="${detail.image_data}" alt="Flagged Frame">
+                            </div>
+                        `;
                     });
+                    
+                    detailsContainer.innerHTML = detailsHtml;
                 }
-                
-                return readStream();
             })
             .catch(error => {
-                progressContainer.style.display = 'none';
-                alert('Error: ' + error.message);
+                console.error('Error:', error);
+                document.getElementById('processing').style.display = 'none';
+                alert('An error occurred while analyzing the video');
             });
         }
     </script>

@@ -1,0 +1,24 @@
+Processing video: NV_9.mp4
+Extracted 1 frames in 0.19 seconds
+Analysis completed in 0.42 seconds
+Total processing time: 0.61 seconds
+Processing video: NV_7.mp4
+Extracted 1 frames in 0.10 seconds
+Analysis completed in 0.20 seconds
+Total processing time: 0.30 seconds
+Processing video: NV_8.mp4
+Extracted 1 frames in 0.10 seconds
+Analysis completed in 0.21 seconds
+Total processing time: 0.31 seconds
+2025-04-21 14:55:58,141 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-21 14:55:58,141 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-04-21 14:55:58,148 - werkzeug - INFO -  * Restarting with stat
+2025-04-21 14:56:02,265 - werkzeug - WARNING -  * Debugger is active!
+2025-04-21 14:56:02,265 - werkzeug - INFO -  * Debugger PIN: 282-707-520
+2025-04-21 15:00:04,725 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-21 15:00:04,727 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-04-21 15:00:04,730 - werkzeug - INFO -  * Restarting with stat
+2025-04-21 15:00:11,426 - werkzeug - WARNING -  * Debugger is active!
+2025-04-21 15:00:11,525 - werkzeug - INFO -  * Debugger PIN: 282-707-520

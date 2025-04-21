@@ -1,43 +1,39 @@
-# Video Content Moderation System
+# Content Moderation 3.0
 
-A Flask-based web application that performs real-time content moderation on uploaded videos, detecting and displaying potentially unsafe frames.
+A video content moderation system that uses machine learning to detect inappropriate content in videos.
 
 ## Features
 
-- Video upload and processing
-- Frame-by-frame content analysis
-- Real-time display of detected unsafe frames
-- Confidence scoring for detections
+- Upload videos through a simple web interface
+- Extract frames from uploaded videos
+- Analyze frames using a pre-trained neural network model
+- Detect inappropriate content such as violence
+- Display results with highlighted problematic frames
 
-## Installation
+## Tech Stack
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/video-content-moderation.git
-cd video-content-moderation
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the application:
-```bash
-python app.py
-```
-
-## Usage
-
-1. Open the application in your web browser
-2. Upload a video file
-3. Click "Analyze Video"
-4. View the results showing any detected unsafe frames
+- Python
+- Flask
+- PyTorch
+- OpenCV
+- Transformers library
 
 ## Deployment
 
-This application is configured for deployment on Render.com.
+This application is configured for deployment on Render.
 
-## License
+### Requirements
 
-MIT License 
+- Python 3.7+
+- PyTorch
+- A trained model in the `models/best_model` directory
+
+## Usage
+
+1. Upload a video through the web interface
+2. Wait for the analysis to complete
+3. Review the results showing safe/unsafe content
+
+## Model
+
+The application uses a fine-tuned ResNet-50 model trained to detect inappropriate content in video frames. 
