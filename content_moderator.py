@@ -1,4 +1,3 @@
-
 import torch
 from PIL import Image
 import numpy as np
@@ -6,12 +5,12 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from tqdm import tqdm
 import os
+from safetensors.torch import load_file  # Assuming you have a library to load safetensors
 
 class VideoFrameDataset(Dataset):
-    def __init__(self, frames, labels, feature_extractor):
+    def __init__(self, frames, labels):
         self.frames = frames
         self.labels = labels
-        self.feature_extractor = feature_extractor
     
     def __len__(self):
         return len(self.frames)
@@ -23,47 +22,37 @@ class VideoFrameDataset(Dataset):
         # Convert numpy array to PIL Image
         image = Image.fromarray(frame)
         
-        # Preprocess the image
-        inputs = self.feature_extractor(image, return_tensors="pt")
+        # Preprocess the image (custom preprocessing if needed)
+        image = image.resize((224, 224))  # Example resize, adjust as needed
+        image = np.array(image).astype(np.float32) / 255.0  # Normalize
+        image = torch.tensor(image).permute(2, 0, 1)  # Convert to tensor and change dimension order
         
         return {
-            'pixel_values': inputs['pixel_values'].squeeze(),
+            'pixel_values': image,
             'label': torch.tensor(label, dtype=torch.long)
         }
 
 class ContentModerator:
-    def __init__(self, model_name="microsoft/resnet-50", train_mode=False):
+    def __init__(self, train_mode=False):
         """
         Initialize the ContentModerator with a pre-trained model.
         
         Args:
-            model_name (str): Name of the pre-trained model to use
             train_mode (bool): Whether to initialize in training mode
         """
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model_name = model_name
         
-        # Always use feature extractor
-        self.feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
-        
-        if train_mode:
-            self.model = AutoModelForImageClassification.from_pretrained(
-                model_name,
-                num_labels=2,  # Binary classification: violent vs non-violent
-                ignore_mismatched_sizes=True
-            ).to(self.device)
+        # Load our trained model
+        model_path = os.path.join("models", "best_model", "model.safetensors")
+        if os.path.exists(model_path):
+            print("Loading trained model...")
+            state_dict = load_file(model_path)  # Load the state dictionary
+            self.model = YourModelClass()  # Replace with your model class
+            self.model.load_state_dict(state_dict)
+            self.model.to(self.device)
+            self.model.eval()  # Set to evaluation mode
         else:
-            # Load our trained model
-            model_path = os.path.join("models", "best_model")
-            if os.path.exists(model_path):
-                print("Loading trained model...")
-                self.model = AutoModelForImageClassification.from_pretrained(
-                    model_path,
-                    num_labels=2
-                ).to(self.device)
-                self.model.eval()  # Set to evaluation mode
-            else:
-                raise FileNotFoundError("Trained model not found. Please train the model first.")
+            raise FileNotFoundError("Trained model not found. Please train the model first.")
     
     def analyze_frames(self, frames):
         """
@@ -78,7 +67,7 @@ class ContentModerator:
         results = []
         
         # Convert frames to dataset
-        dataset = VideoFrameDataset(frames, [0] * len(frames), self.feature_extractor)
+        dataset = VideoFrameDataset(frames, [0] * len(frames))
         dataloader = DataLoader(dataset, batch_size=32)
         
         self.model.eval()
@@ -86,7 +75,7 @@ class ContentModerator:
             for batch in dataloader:
                 pixel_values = batch['pixel_values'].to(self.device)
                 outputs = self.model(pixel_values)
-                predictions = torch.softmax(outputs.logits, dim=1)
+                predictions = torch.softmax(outputs, dim=1)  # Assuming model outputs logits
                 
                 for pred in predictions:
                     # Get probability of violence (class 1)
