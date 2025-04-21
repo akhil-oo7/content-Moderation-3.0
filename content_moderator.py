@@ -5,6 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from tqdm import tqdm
 import os
+import time
 from transformers import AutoModelForImageClassification, AutoFeatureExtractor
 
 class VideoFrameDataset(Dataset):
@@ -43,6 +44,10 @@ class ContentModerator:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model_name = model_name
         
+        # Load model only once and keep in memory
+        print(f"Initializing model on {self.device}...")
+        start_time = time.time()
+        
         # Always use feature extractor
         self.feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
         
@@ -64,10 +69,12 @@ class ContentModerator:
                 self.model.eval()  # Set to evaluation mode
             else:
                 raise FileNotFoundError("Trained model not found. Please train the model first.")
+        
+        print(f"Model loaded in {time.time() - start_time:.2f} seconds")
     
     def analyze_frames(self, frames):
         """
-        Analyze frames for inappropriate content.
+        Analyze frames for inappropriate content with optimized batch processing.
         
         Args:
             frames (list): List of video frames as numpy arrays
@@ -75,15 +82,24 @@ class ContentModerator:
         Returns:
             list: List of analysis results for each frame
         """
+        if not frames:
+            return []
+            
         results = []
         
         # Convert frames to dataset
         dataset = VideoFrameDataset(frames, [0] * len(frames), self.feature_extractor)
-        dataloader = DataLoader(dataset, batch_size=32)
+        
+        # Use larger batch size for faster processing
+        batch_size = min(64, len(frames))
+        dataloader = DataLoader(dataset, batch_size=batch_size)
+        
+        start_time = time.time()
+        print(f"Analyzing {len(frames)} frames with batch size {batch_size}...")
         
         self.model.eval()
         with torch.no_grad():
-            for batch in dataloader:
+            for batch in tqdm(dataloader, desc="Analyzing frames"):
                 pixel_values = batch['pixel_values'].to(self.device)
                 outputs = self.model(pixel_values)
                 predictions = torch.softmax(outputs.logits, dim=1)
@@ -100,4 +116,5 @@ class ContentModerator:
                         'confidence': violence_prob if flagged else 1 - violence_prob
                     })
         
+        print(f"Analysis completed in {time.time() - start_time:.2f} seconds")
         return results 
