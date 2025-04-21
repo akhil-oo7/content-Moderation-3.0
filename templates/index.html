@@ -242,11 +242,14 @@
             <button onclick="analyzeVideo()">Analyze Video</button>
         </div>
         
-        <div class="progress">
-            <div class="progress-bar"></div>
+        <div id="progressContainer" style="display: none;">
+            <div class="progress">
+                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>
+            <p id="progressMessage">Initializing...</p>
         </div>
         
-        <div class="result-section" id="resultSection">
+        <div id="resultsContainer" style="display: none;">
             <h2>Analysis Results</h2>
             <div class="status" id="status"></div>
             <div class="confidence" id="confidence"></div>
@@ -268,62 +271,104 @@
             const formData = new FormData();
             formData.append('video', file);
             
-            // Show progress bar
-            document.querySelector('.progress').style.display = 'block';
-            document.querySelector('.progress-bar').style.width = '0%';
-
+            // Show progress container
+            const progressContainer = document.getElementById('progressContainer');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressMessage = document.getElementById('progressMessage');
+            
+            progressContainer.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            
+            // Make the fetch request
             fetch('/analyze', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                // Hide progress bar
-                document.querySelector('.progress').style.display = 'none';
-
-                // Show results
-                const resultSection = document.getElementById('resultSection');
-                resultSection.style.display = 'block';
-
-                // Update status
-                const status = document.getElementById('status');
-                status.textContent = `Video Status: ${data.status}`;
-                status.className = `status ${data.status.toLowerCase()}`;
-
-                // Update confidence
-                document.getElementById('confidence').textContent = 
-                    `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
-
-                // Update stats
-                document.getElementById('stats').textContent = 
-                    `Analyzed ${data.total_frames} frames. ` +
-                    (data.unsafe_frames > 0 ? 
-                        `${data.unsafe_frames} unsafe frames (${data.unsafe_percentage.toFixed(1)}%)` : 
-                        'No unsafe content detected.');
-
-                // Update details
-                const details = document.getElementById('details');
-                details.innerHTML = '';
+            .then(response => {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
                 
-                if (data.details.length > 0) {
-                    data.details.forEach(detail => {
-                        const frameDetail = document.createElement('div');
-                        frameDetail.className = 'frame-detail';
-                        frameDetail.innerHTML = `
-                            <img src="${detail.image_data}" alt="Frame ${detail.frame}" class="frame-image">
-                            <div class="frame-info">
-                                <strong>Frame ${detail.frame}:</strong><br>
-                                Reason: ${detail.reason}<br>
-                                Confidence: ${(detail.confidence * 100).toFixed(1)}%
-                            </div>
-                        `;
-                        details.appendChild(frameDetail);
+                function readStream() {
+                    return reader.read().then(({done, value}) => {
+                        if (done) {
+                            return;
+                        }
+                        
+                        const text = decoder.decode(value);
+                        const lines = text.split('\n').filter(line => line.trim());
+                        
+                        lines.forEach(line => {
+                            try {
+                                const data = JSON.parse(line);
+                                
+                                if (data.status === 'processing') {
+                                    // Update progress
+                                    progressBar.style.width = data.progress + '%';
+                                    progressBar.setAttribute('aria-valuenow', data.progress);
+                                    progressBar.textContent = data.progress + '%';
+                                    progressMessage.textContent = data.message;
+                                } 
+                                else if (data.status === 'complete') {
+                                    // Display results
+                                    progressContainer.style.display = 'none';
+                                    resultsContainer.style.display = 'block';
+                                    
+                                    // Update status
+                                    const status = document.getElementById('status');
+                                    status.textContent = `Video Status: ${data.result.status}`;
+                                    status.className = `status ${data.result.status.toLowerCase()}`;
+
+                                    // Update confidence
+                                    document.getElementById('confidence').textContent = 
+                                        `Confidence: ${(data.result.confidence * 100).toFixed(1)}%`;
+
+                                    // Update stats
+                                    document.getElementById('stats').textContent = 
+                                        `Analyzed ${data.result.total_frames} frames. ` +
+                                        (data.result.unsafe_frames > 0 ? 
+                                            `${data.result.unsafe_frames} unsafe frames (${data.result.unsafe_percentage.toFixed(1)}%)` : 
+                                            'No unsafe content detected.');
+
+                                    // Update details
+                                    const details = document.getElementById('details');
+                                    details.innerHTML = '';
+                                    
+                                    if (data.result.details.length > 0) {
+                                        data.result.details.forEach(detail => {
+                                            const frameDetail = document.createElement('div');
+                                            frameDetail.className = 'frame-detail';
+                                            frameDetail.innerHTML = `
+                                                <img src="${detail.image_data}" alt="Frame ${detail.frame}" class="frame-image">
+                                                <div class="frame-info">
+                                                    <strong>Frame ${detail.frame}:</strong><br>
+                                                    Reason: ${detail.reason}<br>
+                                                    Confidence: ${(detail.confidence * 100).toFixed(1)}%
+                                                </div>
+                                            `;
+                                            details.appendChild(frameDetail);
+                                        });
+                                    }
+                                }
+                                else if (data.status === 'error') {
+                                    // Display error
+                                    progressContainer.style.display = 'none';
+                                    alert('Error: ' + data.message);
+                                }
+                            } catch (e) {
+                                console.error('Error parsing JSON:', e, line);
+                            }
+                        });
+                        
+                        return readStream();
                     });
                 }
+                
+                return readStream();
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while analyzing the video');
+                progressContainer.style.display = 'none';
+                alert('Error: ' + error.message);
             });
         }
     </script>
