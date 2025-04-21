@@ -1,4 +1,4 @@
-from transformers import pipeline, AutoModelForImageClassification, AutoFeatureExtractor
+
 import torch
 from PIL import Image
 import numpy as np
